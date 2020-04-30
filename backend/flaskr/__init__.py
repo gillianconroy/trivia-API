@@ -22,7 +22,7 @@ def paginate_questions(request, selection):
 
 
 def create_app(test_config=None):
-  # create and configure the app
+  # Create and configure the app
   app = Flask(__name__)
   setup_db(app)
   cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -36,7 +36,7 @@ def create_app(test_config=None):
     return response
 
   '''
-  @TODO:
+  @DONE:
   Create an endpoint to handle GET requests
   for all available categories.
   '''
@@ -45,6 +45,7 @@ def create_app(test_config=None):
     categories = Category.query.all()
     catgs = {cat.id: cat.type for cat in categories}
 
+    # Return error if query returned no categories
     if len(categories) == 0:
       abort(404)
 
@@ -55,7 +56,7 @@ def create_app(test_config=None):
     })
 
   '''
-  @TODO:
+  @DONE:
   Create an endpoint to handle GET requests for questions,
   including pagination (every 10 questions).
   This endpoint should return a list of questions,
@@ -82,12 +83,11 @@ def create_app(test_config=None):
       'success': True,
       'questions': current_qs,
       'total_questions': len(selection),
-      'current_category': all_catgs,
       'categories': all_catgs
     })
 
   '''
-  @TODO:
+  @DONE:
   Create an endpoint to DELETE question using a question ID.
 
   TEST: When you click the trash icon next to a question,
@@ -96,7 +96,7 @@ def create_app(test_config=None):
   '''
   @app.route('/questions/<question_id>', methods=['DELETE'])
   def delete_question(question_id):
-    delete_q = Question.query.filter_by(id=question_id).first()
+    delete_q = Question.query.filter_by(id=question_id).one_or_none()
 
     if delete_q is None:
       abort(404)
@@ -110,7 +110,7 @@ def create_app(test_config=None):
     })
 
   '''
-  @TODO:
+  @DONE:
   Create an endpoint to POST a new question,
   which will require the question and answer text,
   category, and difficulty score.
@@ -129,19 +129,26 @@ def create_app(test_config=None):
 
     new_q = Question(question, answer, category, difficulty)
 
-    # check with a simple validatation
-    if (new_q.question == '' or new_q.answer == ''
-       or new_q.category == '' or new_q.difficulty == ''):
-      abort(422)
-    else:
+    q = {
+      'question': question, 
+      'answer': answer, 
+      'category': category,
+      'difficulty': difficulty
+      }
+
+    # Check with a simple validatation
+    if all(q.values()):
       new_q.insert()
+    else:
+      abort(422)
 
     return jsonify({
-      'success': True
+      'success': True,
+      'new_question': q
     })
 
   '''
-  @TODO:
+  @DONE:
   Create a POST endpoint to get questions based on a search term.
   It should return any questions for whom the search term
   is a substring of the question.
@@ -157,15 +164,16 @@ def create_app(test_config=None):
     if search_term == '':
       abort(404)
     else:
-      # query the DB for searchTerm in substring (not case-sensitive)
+      # Query the DB for searchTerm in substring (not case-sensitive)
       selection = Question.query.filter(
                   Question.question.ilike(f'%{search_term}%')).all()
       result = paginate_questions(request, selection)
 
       current_catgs = []
 
+      # Append category type string to current_catgs.
       for r in selection:
-        cat = Category.query.filter_by(id=r.category).first()
+        cat = Category.query.filter_by(id=r.category).one_or_none()
         if cat.type not in current_catgs:
           current_catgs.append(cat.type)
 
@@ -177,7 +185,7 @@ def create_app(test_config=None):
     })
 
   '''
-  @TODO:
+  @DONE:
   Create a GET endpoint to get questions based on category.
 
   TEST: In the "List" tab / main screen, clicking on one of the
@@ -185,17 +193,18 @@ def create_app(test_config=None):
   category to be shown.
   '''
   @app.route('/categories/<category_id>/questions', methods=['GET'])
-  def getByCategory(category_id):
+  def get_by_category(category_id):
     selection = Question.query.filter_by(category=category_id).all()
     result = paginate_questions(request, selection)
     count_catgs = Category.query.count()
 
+    # Check if URL resource category_id is in range of Category count
     if int(category_id) not in range(1, count_catgs + 1):
       abort(404)
 
     current_catgs = []
     for r in selection:
-      cat = Category.query.filter_by(id=r.category).first()
+      cat = Category.query.filter_by(id=r.category).one_or_none()
       if cat.type not in current_catgs:
         current_catgs.append(cat.type)
 
@@ -207,7 +216,7 @@ def create_app(test_config=None):
     })
 
   '''
-  @TODO:
+  @DONE:
   Create a POST endpoint to get questions to play the quiz.
   This endpoint should take category and previous question parameters
   and return a random questions within the given category,
@@ -218,7 +227,7 @@ def create_app(test_config=None):
   and shown whether they were correct or not.
   '''
   @app.route('/quizzes', methods=['POST'])
-  def getNextQuestion():
+  def get_next_question():
     previous_q = request.get_json()['previous_questions']
     quiz_cat = request.get_json()['quiz_category']
 
@@ -227,6 +236,7 @@ def create_app(test_config=None):
 
     cat_id = quiz_cat['id']
 
+    # If all categories are selected, cat_id key "id": 0.
     if cat_id == 0:
       selection = Question.query.all()
     else:
@@ -235,6 +245,8 @@ def create_app(test_config=None):
         abort(404)
     questions = [question.format() for question in selection]
 
+    # Return JSON body with no current_q if specified rounds of game play 
+    # exceeds the number of questions.
     if len(previous_q) + 1 > len(questions):
       return jsonify({
         'success': True,
@@ -253,11 +265,11 @@ def create_app(test_config=None):
     })
 
   @app.route('/error', methods=['GET'])
-  def errorHandler():
+  def error_handler():
     abort(500)
 
   '''
-  @TODO:
+  @DONE:
   Create error handlers for all expected errors
   including 404 and 422.
   '''

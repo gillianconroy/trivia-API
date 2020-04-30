@@ -166,12 +166,20 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_play_game(self):
         """Test play game by all categories"""
-        res = self.client().post('/quizzes', json={'quiz_category':{'id': 0, 'type': 'click'}, 'previous_questions': {}})
+        res = self.client().post('/quizzes', json={'quiz_category':{'id': 0, 'type': 'click'}, 'previous_questions': []})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertTrue(data['question'])
+
+    def test_play_game_no_current_question(self):
+        """Test play game with no current question"""
+        res = self.client().post('/quizzes', json={'quiz_category':{'id': 6, 'type': 'Sports'}, 'previous_questions': [10,11]})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
 
     def test_error_play_game_wrong_category(self):
         """Test play game with non-existent category id"""
