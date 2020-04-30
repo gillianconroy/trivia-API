@@ -15,7 +15,8 @@ class TriviaTestCase(unittest.TestCase):
         self.app = create_app()
         self.client = self.app.test_client
         self.database_name = "trivia_test"
-        self.database_path = "postgres://{}/{}".format('localhost:5432', self.database_name)
+        self.database_path = "postgres://{}/{}".format(
+            'localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
         # binds the app to the current context
@@ -24,14 +25,15 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
-    
+
     def tearDown(self):
         """Executed after reach test"""
         pass
 
     """
     TODO
-    Write at least one test for each test for successful operation and for expected errors.
+    Write at least one test for each test for successful
+    operation and for expected errors.
     """
 
     def test_get_categories(self):
@@ -50,7 +52,6 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 405)
         self.assertEqual(data['message'], 'method not allowed')
-
 
     def test_get_questions(self):
         """Test get request to /questions"""
@@ -92,19 +93,21 @@ class TriviaTestCase(unittest.TestCase):
     #     self.assertEqual(data['deleted_question'], 6)
     #     self.assertTrue(data['total_questions'])
 
-
     def test_fail_delete_question_beyond_index(self):
         """Test 404 if DB Questions returns None"""
         res = self.client().delete('/questions/10000')
-        data = json.loads(res.data) 
+        data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
-    
+
     # def test_add_new_question(self):
     #     """Test add new question to DB"""
-    #     res = self.client().post('/questions/add', json={'question': 'What\'s Tuckers favorite snack?', 'answer': 'Liver bites', 'difficulty': 1, 'category': 6})
+    #     res = self.client().post('/questions/add',
+    #           json={'question': 'What\'s Tuckers favorite snack?',
+    #                 'answer': 'Liver bites', 'difficulty': 1,
+    #                 'category': 6})
     #     data = json.loads(res.data)
 
     #     self.assertEqual(res.status_code, 200)
@@ -112,7 +115,13 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_if_request_get_json_is_none(self):
         """Test if data is incomplete from request.get_json"""
-        res = self.client().post('/questions/add', json={'question': '', 'answer': 'Liver bites', 'difficulty': 1, 'category': 6})
+        res = self.client().post(
+            '/questions/add',
+            json={
+                'question': '',
+                'answer': 'Liver bites',
+                'difficulty': 1,
+                'category': 6})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 422)
@@ -120,7 +129,13 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_wrong_method_add_question(self):
         """Test add new question to DB"""
-        res = self.client().get('/questions/add', json={'question': 'What\'s Tuckers favorite snack?', 'answer': 'Liver bites', 'difficulty': 1, 'category': 6})
+        res = self.client().get(
+            '/questions/add',
+            json={
+                'question': 'What\'s Tuckers favorite snack?',
+                'answer': 'Liver bites',
+                'difficulty': 1,
+                'category': 6})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 405)
@@ -135,7 +150,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['questions'])
         self.assertTrue(data['current_category'])
-    
 
     def test_blank_search_term(self):
         """Test search term"""
@@ -145,7 +159,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
-    
+
     def test_get_by_category(self):
         """Test retrieve questions by category"""
         res = self.client().get('/categories/2/questions')
@@ -166,7 +180,13 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_play_game(self):
         """Test play game by all categories"""
-        res = self.client().post('/quizzes', json={'quiz_category':{'id': 0, 'type': 'click'}, 'previous_questions': []})
+        res = self.client().post(
+            '/quizzes',
+            json={
+                'quiz_category': {
+                    'id': 0,
+                    'type': 'click'},
+                'previous_questions': []})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -175,7 +195,15 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_play_game_no_current_question(self):
         """Test play game with no current question"""
-        res = self.client().post('/quizzes', json={'quiz_category':{'id': 6, 'type': 'Sports'}, 'previous_questions': [10,11]})
+        res = self.client().post(
+            '/quizzes',
+            json={
+                'quiz_category': {
+                    'id': 6,
+                    'type': 'Sports'},
+                'previous_questions': [
+                    10,
+                    11]})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -183,7 +211,13 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_error_play_game_wrong_category(self):
         """Test play game with non-existent category id"""
-        res = self.client().post('/quizzes', json={'quiz_category':{'id': 7, 'type': 'Music'}, 'previous_questions': {}})
+        res = self.client().post(
+            '/quizzes',
+            json={
+                'quiz_category': {
+                    'id': 7,
+                    'type': 'Music'},
+                'previous_questions': {}})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
